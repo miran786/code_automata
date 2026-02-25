@@ -1,91 +1,88 @@
-# ROADMAP: SYNAPSE
+# ROADMAP: SYNAPSE (PC Hub Architecture)
 
 > Execution plan to evolve HealthGuard → SYNAPSE
-> Each phase delivers a **vertical slice** that can be demonstrated independently.
+> This roadmap reflects the **PC Hub Architecture**, where a local PC acts as the "Brain" and the Flutter app acts as a telemetry client.
 
 ---
 
-## Phase 1: The Ear (Local Whisper STT)
-**Milestone:** Student can hear the classroom transcribed on-screen, fully offline.
+## Phase 1: The Ear (PC Whisper Pipeline)
+**Milestone:** A Python script on the PC (RTX 4060) can listen to the classroom mic and transcribe locally in real-time.
 
-| # | Task | Files | Wave |
-|---|------|-------|------|
-| 1.1 | Add `whisper_ggml_plus`, `record`, `path_provider` deps | `pubspec.yaml` | 1 |
-| 1.2 | Download `ggml-tiny.en.bin` model to app assets | `assets/models/` | 1 |
-| 1.3 | Create `WhisperService` (init model, record, transcribe) | `services/whisper_service.dart` | 1 |
-| 1.4 | Build `ClassroomScreen` UI (mic button, live transcript) | `features/classroom/` | 2 |
-| 1.5 | Add route + navigation entry from dashboard | `main.dart`, `dashboard_screen.dart` | 2 |
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 1.1 | Setup Python virtual environment & install `faster-whisper` | PC Hub | 1 |
+| 1.2 | Download `ggml-base.en.bin` (or small) to PC storage | PC Hub | 1 |
+| 1.3 | Create `whisper_service.py` (live mic stream → fast transcription chunks) | PC Hub | 1 |
+| 1.4 | Add WebSocket server in Python to broadcast transcriptions to clients | PC Hub | 2 |
+| 1.5 | Build simple Flutter `ClassroomScreen` that connects to PC WebSocket and displays text | Flutter | 2 |
 
-**Demo:** Tap mic → speak into phone → text appears on screen. No internet.
-
----
-
-## Phase 2: The Nervous System (IoT Telemetry)
-**Milestone:** Live sensor data streams from glove → phone over WiFi.
-
-| # | Task | Files | Wave |
-|---|------|-------|------|
-| 2.1 | Add `web_socket_channel` dependency | `pubspec.yaml` | 1 |
-| 2.2 | Create `TelemetryService` (WebSocket client, CSV parser) | `services/telemetry_service.dart` | 1 |
-| 2.3 | Create `HardwareTelemetry` model (flex×5, gyro×2, HR) | `models/hardware_telemetry.dart` | 1 |
-| 2.4 | Build `GloveDebugScreen` (live sensor visualization) | `features/glove/glove_debug_screen.dart` | 2 |
-| 2.5 | Add route + navigation entry | `main.dart` | 2 |
-
-**Demo:** Bend fingers on glove → bars move on phone screen in real-time.
+**Demo:** Speak into PC mic → text appears instantly on the Flutter app screen. Fully offline inference.
 
 ---
 
-## Phase 3: The Brain (Neural-Intent Engine)
-**Milestone:** Student signs a gesture → system speaks a fluent, context-aware sentence.
+## Phase 2: The Vitals Stream (Phone → PC)
+**Milestone:** Flutter app streams real-time heart rate from smartwatch/Health Connect to the PC.
 
-| # | Task | Files | Wave |
-|---|------|-------|------|
-| 3.1 | Create `GestureLibrary.json` (reference vectors for 10+ gestures) | `assets/gesture_library.json` | 1 |
-| 3.2 | Implement `GestureEngine` (cosine similarity matching in Dart) | `services/gesture_engine.dart` | 1 |
-| 3.3 | Create `IntentService` (gesture intent + Whisper context → Gemini → sentence) | `services/intent_service.dart` | 2 |
-| 3.4 | Build `GloveScreen` (shows matched gesture, generated sentence, speak button) | `features/glove/glove_screen.dart` | 2 |
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 2.1 | Add WebSocket endpoint `/vitals` to PC Python server | PC Hub | 1 |
+| 2.2 | Update Flutter `HealthService` to read continuous HR (or mock HR for demo) | Flutter | 1 |
+| 2.3 | Create `TelemetryClient` in Flutter to squirt HR data to PC WebSocket every second | Flutter | 1 |
+| 2.4 | Create Python `vitals_receiver.py` to keep latest HR state in memory | PC Hub | 2 |
 
-**Demo:** Sign "Hello" → screen shows "Hello everyone, nice to meet you." → phone speaks it.
+**Demo:** Jog wearing smartwatch → PC console logs rising heart rate in real-time.
+
+---
+
+## Phase 3: The Brain (Serial Gestures + Intent)
+**Milestone:** Arduino sends flex data over USB/Serial. PC matches the gesture, asks Gemini for context, and generates a sentence.
+
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 3.1 | Create `serial_listener.py` to read `<F1..5, GX, GY>` from Arduino | PC Hub | 1 |
+| 3.2 | Create `gesture_engine.py` (cosine similarity against `gesture_library.json`) | PC Hub | 1 |
+| 3.3 | Create `intent_service.py` to prompt Gemini API (gesture + recent whisper transcript) | PC Hub | 2 |
+| 3.4 | Implement offline template fallback in Python (if Gemini rate-limited/offline) | PC Hub | 2 |
+
+**Demo:** Bend glove fingers → PC terminal prints: "Gesture: Question. Generated: Excuse me, Professor..."
 
 ---
 
 ## Phase 4: The Voice (Affective Resonance TTS)
-**Milestone:** Generated speech has emotion — pitch and speed change with heart rate.
+**Milestone:** PC generates speech via Edge TTS or local Python TTS, modulated by the heart rate received from Phase 2. Arduino drives the speaker.
 
-| # | Task | Files | Wave |
-|---|------|-------|------|
-| 4.1 | Create `VoiceService` (wraps `flutter_tts`, accepts HR parameter) | `services/voice_service.dart` | 1 |
-| 4.2 | Implement HR→pitch/rate mapping table | `services/voice_service.dart` | 1 |
-| 4.3 | Wire end-to-end: TelemetryService HR → VoiceService → TTS output | `features/glove/glove_screen.dart` | 2 |
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 4.1 | Install `pyttsx3` or `edge-tts` in Python environment | PC Hub | 1 |
+| 4.2 | Create `voice_service.py` with continuous HR → Pitch/Rate interpolation | PC Hub | 1 |
+| 4.3 | Wire generation: Intent → VoiceService → Audio output channel (3.5mm out to PAM8403) | PC Hub | 2 |
+| 4.4 | Configure PC audio routing to ensure Arduino PAM8403 receives output | Hardware | 2 |
 
-**Demo:** Jog in place (HR rises) → sign "Win" → voice says "We're going to WIN!" in an excited tone.
+**Demo:** Sign "Win" while HR is 120bpm → PC outputs high-pitched, fast "We're going to WIN!" audio directly to bone transducer.
 
 ---
 
 ## Phase 5: The Body (Integration & Polish)
-**Milestone:** End-to-end demo-ready. All systems working together.
+**Milestone:** Full end-to-end system test. Rebranded app. Bulletproof demo mode.
 
-| # | Task | Files | Wave |
-|---|------|-------|------|
-| 5.1 | Rebrand app from HealthGuard → SYNAPSE (app name, theme, splash) | Multiple UI files | 1 |
-| 5.2 | Create unified "Synapse Mode" screen (gesture + transcript + voice in one view) | `features/synapse/synapse_screen.dart` | 1 |
-| 5.3 | Tune cosine similarity thresholds with real glove data | `assets/gesture_library.json` | 2 |
-| 5.4 | Add error recovery (WebSocket reconnect, model reload) | Services layer | 2 |
-| 5.5 | Demo rehearsal and timing optimization | — | 3 |
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 5.1 | Rebrand Flutter app to "SYNAPSE" (Deep Purple / Cyan theme, splash screen) | Flutter | 1 |
+| 5.2 | Update Dashboard to show PC Connection Status (Red/Green LED) | Flutter | 1 |
+| 5.3 | Build unified `main.py` entrypoint on PC (coordinates Whisper, Serial, TTS, WebSocket) | PC Hub | 2 |
+| 5.4 | Create "Mock Serial" mode in Python for software-only testing | PC Hub | 2 |
+| 5.5 | Write 3-minute Demo Script and rehearse | Documentation | 3 |
 
-**Demo:** The full "Wow" sequence from the pitch document.
+**Demo:** The ultimate "Wow" sequence. Glove → PC → Gemini → Voice out to Transducer + Phone shows transcript.
 
 ---
 
 ## Dependency Graph
 
 ```
-Phase 1 (Ear)  ──┐
-                  ├──▶ Phase 3 (Brain) ──▶ Phase 4 (Voice) ──▶ Phase 5 (Body)
-Phase 2 (Nerves) ┘
+Phase 1 (PC Whisper) ────┐
+                         ├──▶ Phase 3 (PC Intent) ──▶ Phase 4 (PC Voice) ──▶ Phase 5
+Phase 2 (Phone Vitals) ──┘                                                      ▲
+                                                                                │
+Phase 5a (Flutter Theme / UI Polish) ───────────────────────────────────────────┘
 ```
-
-Phases 1 and 2 are **independent** and can be built in parallel.
-Phase 3 requires both (gesture vectors from Phase 2 + classroom context from Phase 1).
-Phase 4 requires Phase 3 (needs sentences to speak).
-Phase 5 integrates everything.

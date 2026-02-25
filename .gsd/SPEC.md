@@ -36,50 +36,51 @@ The student signs. The system speaks fluently, with emotion. The student hears t
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    SMART GLOVE (Hardware)                     │
+│                    SMART GLOVE & IOT                          │
 │  5× Flex Sensors │ MPU6050 Gyro │ Pulse Sensor               │
 │         └──────────────┬──────────────┘                      │
-│              Arduino Uno (reads sensors)                      │
-│                        │ Serial @ 9600 baud                  │
-│              ESP8266 NodeMCU (WiFi gateway)                   │
-│                        │ WebSocket                           │
+│              Arduino Uno (reads sensors, drives amp)          │
+│                        │ Serial                              │
 └────────────────────────┼─────────────────────────────────────┘
                          │
 ┌────────────────────────┼─────────────────────────────────────┐
-│              FLUTTER APP (The Brain)                          │
+│              PC HUB (The Brain & Voice)                       │
 │                        │                                     │
 │  ┌─────────────────────┴───────────────────────────┐         │
-│  │           TelemetryService (WebSocket)            │        │
-│  │  Receives: <F1,F2,F3,F4,F5,GX,GY,HR>            │        │
+│  │           Serial Listener                         │        │
+│  │  Receives: <F1,F2,F3,F4,F5,GX,GY>               │        │
 │  └──────┬──────────────┬───────────────┬────────────┘        │
 │         │              │               │                     │
 │  ┌──────┴──────┐ ┌─────┴─────┐  ┌──────┴──────┐             │
-│  │ GestureEngine│ │VoiceService│  │ VitalsFeed  │            │
-│  │ 7D Cosine   │ │ flutter_tts│  │ HR→Pitch    │            │
-│  │ Similarity  │ │ output     │  │ Modulation  │            │
-│  └──────┬──────┘ └─────┬─────┘  └─────────────┘             │
-│         │              │                                     │
-│  ┌──────┴──────┐       │                                     │
-│  │IntentService│       │                                     │
-│  │ Gemini LLM  │───────┘                                     │
-│  │ Context Gen │                                             │
-│  └─────────────┘                                             │
-│                                                              │
-│  ┌──────────────────────────────────────────────┐            │
-│  │          WhisperService (LOCAL)                │           │
-│  │  whisper_ggml_plus → On-device STT            │           │
-│  │  Classroom mic → Text on screen               │           │
-│  │  → Bone Conduction transducer                 │           │
-│  └──────────────────────────────────────────────┘            │
-│                                                              │
-│  ┌──────────────────────────────────────────────┐            │
-│  │      Existing HealthGuard Services            │           │
-│  │  HealthService (Health Connect vitals)         │           │
-│  │  ApiService (Backend sync)                    │           │
-│  │  ChatService (Gemini AI chat)                 │           │
-│  │  CoachingService (Gemini coaching plans)       │           │
-│  │  SpikeAlertService (HR emergency alerts)       │           │
-│  └──────────────────────────────────────────────┘            │
+│  │ GestureEngine│ │VoiceService│  │ VitalsReceiver│<─(WiFi)─┐ │
+│  │ 7D Cosine   │ │ TTS Output │  │ Modulates   │          │ │
+│  │ Similarity  │ │ to Arduino │  │ HR→Pitch    │          │ │
+│  └──────┬──────┘ └─────┬─────┘  └─────────────┘          │ │
+│         │              │                                 │ │
+│  ┌──────┴──────┐       │                                 │ │
+│  │IntentService│       │                                 │ │
+│  │ Gemini LLM  │───────┘                                 │ │
+│  │ Context Gen │                                         │ │
+│  └─────────────┘                                         │ │
+│                                                          │ │
+│  ┌──────────────────────────────────────────────┐        │ │
+│  │          Whisper STT                           │        │ │
+│  │  Classroom mic → Whisper.cpp (PC GPU)          │        │ │
+│  │  → Bone Conduction transducer connected to     │        │ │
+│  │    Arduino                                     │        │ │
+│  └──────────────────────────────────────────────┘        │ │
+└────────────────────────┬─────────────────────────────────────┘
+                         │                                 │
+┌────────────────────────┼─────────────────────────────────┼───┐
+│              FLUTTER APP (Vitals Client)                 │   │
+│                        │                                 │   │
+│  ┌───────────────────────────────────────────────┐       │   │
+│  │  HealthService (Health Connect vitals)          ├───────┘   │
+│  │  TelemetryClient (Sends HR to PC over WiFi)     │           │
+│  │  ApiService (Backend sync)                      │           │
+│  │  ChatService (Gemini AI chat)                   │           │
+│  │  DashboardScreen (Views health/device stat)     │           │
+│  └───────────────────────────────────────────────┘           │
 └──────────────────────────────────────────────────────────────┘
                          │
 ┌────────────────────────┼─────────────────────────────────────┐
@@ -89,7 +90,7 @@ The student signs. The system speaks fluently, with emotion. The student hears t
 
 OUTPUT HARDWARE:
   └── PAM8403 Amp → Bone Conduction Transducer (8Ω)
-      └── Connected via 3.5mm jack from phone
+      └── Connected to Arduino PWM / DAC output
 ```
 
 ---
@@ -143,7 +144,7 @@ OUTPUT HARDWARE:
 - A **bone conduction transducer** on the cheekbone vibrates sound directly into the skull, bypassing the ear canal.
 - The student feels their generated speech the **instant** they sign.
 - Over time, this creates a neurological association: signing → feeling sound → "speaking."
-- The same transducer plays back Whisper-transcribed classroom audio for the student.
+- Audio is streamed via WiFi from the phone to the ESP8266, completely untethering the student from the device.
 
 ---
 
@@ -192,26 +193,24 @@ OUTPUT HARDWARE:
 STUDENT SIGNS "QUESTION"
         │
         ▼
-[Arduino reads flex sensors + gyro + pulse]
-        │ Serial: "512,890,200,780,340,0.45,-0.12,78"
+[Arduino reads flex sensors + gyro]
+        │ Serial: "512,890,200,780,340,0.45,-0.12"
         ▼
-[ESP8266 forwards via WebSocket]
+[PC Hub Python Script parses Serial]
         │
-        ▼
-[Flutter TelemetryService parses CSV]
+        ├──▶ GestureEngine: cosine_similarity([512,890,200,780,340,0.45,-0.12]) → "question"
         │
-        ├──▶ GestureEngine: cosine_similarity([512,890,200,780,340,0.45,-0.12], library) → "question"
+        ├──▶ Whisper (PC): classroom audio → "The teacher is explaining photosynthesis"
         │
-        ├──▶ WhisperService (background): classroom audio → "The teacher is explaining photosynthesis"
-        │
-        ├──▶ IntentService (Gemini): intent="question" + context="photosynthesis" 
+        ├──▶ IntentService (Gemini on PC): intent="question" + context="photosynthesis" 
         │         → "Excuse me, Professor. I have a question about photosynthesis."
         │
-        ├──▶ VoiceService: HR=78 (Normal) → pitch=1.0, rate=1.0
-        │         → flutter_tts.speak("Excuse me, Professor...")
+        ├──▶ VoiceService (PC): Receives HR via WebSocket from Flutter App
+        │         → HR=78 (Normal) → pitch=1.0, rate=1.0
+        │         → Plays TTS Audio over Serial/Audio Out to Arduino
         │
-        └──▶ Output: Phone speaker + Bone Conduction transducer
-                      Student hears their own voice in their skull
+        └──▶ Arduino routes audio to PAM8403 + Bone Conduction transducer
+              Student hears their own voice in their skull
 ```
 
 ---

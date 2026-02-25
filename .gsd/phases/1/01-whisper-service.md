@@ -60,8 +60,8 @@ Load for context:
 
     1. `Future<void> initialize()`:
        - Use `whisper_ggml_plus` to check if the model exists on local storage (via `path_provider` getApplicationDocumentsDirectory).
-       - If model does not exist, download `ggml-tiny.en.bin` from the public Hugging Face URL:
-         `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin`
+       - If model does not exist, download `ggml-base.en.bin` (or `ggml-small.en.bin` for even better accuracy since you have the RTX 4060) from the public Hugging Face URL:
+         `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin`
        - Initialize the whisper instance with the downloaded model path.
        - Expose an `isInitialized` getter.
 

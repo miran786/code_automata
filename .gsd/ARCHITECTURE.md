@@ -12,80 +12,48 @@ The existing HealthGuard vitals infrastructure (Health Connect, backend sync, AI
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│               HARDWARE LAYER                         │
+│               HARDWARE LAYER (IoT)                   │
 │  Arduino Uno ← Flex×5 + MPU6050 + Pulse Sensor      │
-│       │ Serial                                       │
-│  ESP8266 NodeMCU → WebSocket over WiFi               │
-│       │                                              │
-│  Bone Conduction Transducer ← PAM8403 Amp ← Phone   │
+│       │ Serial / USB                                 │
+│  Bone Conduction Transducer ← PAM8403 Amp ← Arduino  │
 └───────┼──────────────────────────────────────────────┘
-        │
+        │ Serial / Local Connection
 ┌───────┼──────────────────────────────────────────────┐
-│       │        FLUTTER APP LAYER                      │
-│       │                                              │
-│  ┌────┴────────────────────────────────────────┐     │
-│  │   NEW SYNAPSE SERVICES                       │    │
-│  │                                              │    │
-│  │  TelemetryService   — WebSocket client       │    │
-│  │  WhisperService     — Local whisper.cpp STT  │    │
-│  │  GestureEngine      — 7D cosine similarity   │    │
-│  │  IntentService      — Gemini context gen     │    │
-│  │  VoiceService       — HR-modulated TTS       │    │
-│  └──────────────────────────────────────────────┘    │
+│       │          PC HUB LAYER                        │
+│       │ (The Brain & Voice Translation Hub)          │
 │                                                      │
-│  ┌──────────────────────────────────────────────┐    │
-│  │   EXISTING HEALTHGUARD SERVICES (Preserved)  │    │
-│  │                                              │    │
-│  │  HealthService      — Health Connect vitals  │    │
-│  │  ApiService         — Backend REST client    │    │
-│  │  ChatService        — Gemini AI chat         │    │
-│  │  CoachingService    — Gemini coaching plans  │    │
-│  │  SpikeAlertService  — HR emergency alerts    │    │
-│  └──────────────────────────────────────────────┘    │
+│  Whisper STT (PC / Python / Local)                   │
+│  GestureEngine (7D cosine similarity on PC)          │
+│  IntentService (Gemini context gen on PC)            │
+│  VoiceService (Audio gen + Arduino output)           │
+│  WebSocket Server (Receives Vitals from Phone)       │
+└───────┼──────────────────────────────────────────────┘
+        │ WiFi (WebSocket / REST)
+┌───────┼──────────────────────────────────────────────┐
+│       │        FLUTTER APP LAYER                     │
+│       │ (Vitals & Dashboard Client)                  │
+│                                                      │
+│  HealthService      — Health Connect vitals          │
+│  TelemetryClient    — Steams Vitals to PC Hub        │
+│  ApiService         — Backend REST client            │
+│  ChatService        — Gemini AI chat                 │
+│  Dashboard          — View status & remote data      │
 └──────────────────────────────────────────────────────┘
         │
 ┌───────┼──────────────────────────────────────────────┐
-│       │        BACKEND LAYER (Existing)               │
+│       │        BACKEND LAYER (Existing)              │
 │  Node.js + Express + SQLite                          │
 │  Tables: Doctor, Patient, Vitals, Appointments       │
 │  Routes: /patient, /doctor                           │
 └──────────────────────────────────────────────────────┘
 ```
 
-## New Components (SYNAPSE)
+## Shift in Architecture (PC as Hub)
 
-### Services
+The role of the Flutter app has changed significantly from the original plans. 
 
-| Service | File | Purpose |
-|---------|------|---------|
-| WhisperService | `services/whisper_service.dart` | On-device whisper.cpp STT via `whisper_ggml_plus` |
-| TelemetryService | `services/telemetry_service.dart` | WebSocket client receiving glove sensor data |
-| GestureEngine | `services/gesture_engine.dart` | 7D vector cosine similarity matching |
-| IntentService | `services/intent_service.dart` | Gesture intent + context → Gemini → fluent sentence |
-| VoiceService | `services/voice_service.dart` | HR-modulated TTS output via `flutter_tts` |
-
-### Models
-
-| Model | File | Purpose |
-|-------|------|---------|
-| HardwareTelemetry | `models/hardware_telemetry.dart` | Parsed sensor data (flex×5, gyro×2, HR) |
-| GestureMatch | `models/gesture_match.dart` | Matched gesture with confidence score |
-
-### Screens
-
-| Screen | File | Purpose |
-|--------|------|---------|
-| ClassroomScreen | `features/classroom/classroom_screen.dart` | Whisper STT live transcript |
-| GloveDebugScreen | `features/glove/glove_debug_screen.dart` | Raw sensor visualization |
-| GloveScreen | `features/glove/glove_screen.dart` | Gesture → speech main interface |
-| SynapseScreen | `features/synapse/synapse_screen.dart` | Unified demo mode |
-
-### Assets
-
-| Asset | Purpose |
-|-------|---------|
-| `ggml-tiny.en.bin` | Whisper model (downloaded to device storage, ~75MB) |
-| `gesture_library.json` | Reference gesture vectors for cosine similarity |
+1. **PC Hub**: The PC is now the central compute hub for the physical hardware. It reads the Arduino (via serial line), runs the Whisper STT, does the Gesture matching, pings Gemini for Intent generation, and outputs TTS to the bone conduction transducer via the connected Arduino/amp.
+2. **Flutter App**: The Flutter app is now primarily a health-data streaming source. It reads Apple Health/Health Connect vitals and streams them to the PC Hub over WiFi so the VoiceService can modulate the TTS emotion based on the student's live heart rate. It also retains its dashboard and AI chat functionalities.
 
 ## Existing Components (HealthGuard — Preserved)
 
@@ -115,5 +83,6 @@ Express + SQLite with Doctor/Patient/Vitals/Appointments tables
 - [ ] Gemini API key hardcoded in `config/ai_config.dart`
 - [ ] Passwords stored in plaintext (no hashing)
 - [ ] No JWT/session management
-- [ ] `google_generative_ai` in dev_dependencies instead of dependencies
+- [x] ~~`google_generative_ai` in dev_dependencies~~ → Fixed: moved to production dependencies
+- [x] ~~`speech_to_text` unused dependency~~ → Fixed: removed (Whisper replaces it)
 - [ ] No automated tests
