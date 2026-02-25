@@ -64,17 +64,40 @@
 | 5.3 | Rebrand App to SYNAPSE (Deep Purple/Cyan theme) | App | 2 |
 | 5.4 | Rehearse 5-Step Demo (The Silence, Connection, Intelligence, Emotion, Climax) | Docs | 3 |
 
+## Phase 6: Dockerization (Environment Harmony)
+**Milestone:** Complete project containerization to eliminate "it works on my machine" issues. Hub, Backend, and Database all running in a single `docker-compose` network.
+
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 6.1 | Create `Dockerfile` for Node.js Backend (Express + SQLite) | Backend | 1 |
+| 6.2 | Create `Dockerfile` for PC Hub (Python + Whisper + Serial) | Hub | 1 |
+| 6.3 | Configure `docker-compose.yml` to orchestrate Backend, Hub, and Ollama | DevSecOps | 1 |
+| 6.4 | Optimize PC Hub image for GPU acceleration (if NVIDIA container toolkit available) | Hub | 2 |
+
+---
+
+## Phase 7: The Developer Cockpit (Quality of Life)
+**Milestone:** A suite of internal tools to speed up iteration for the PC Hub and IoT transitions.
+
+| # | Task | Target | Wave |
+|---|------|--------|------|
+| 7.1 | Setup `nodemon` / `debugpy` for the Python Hub to auto-reload on code changes | Hub | 1 |
+| 7.2 | Create `scripts/simulate_glove.py` to pipe mock finger data into the WebSocket | Dev Tool | 1 |
+| 7.3 | Implement an "Intent Playground" (simple CLI/UI to test Gemini/Ollama prompts) | Hub | 2 |
+| 7.4 | Add a "Latency Probe" to the web dashboard to measure end-to-end delay (Glove → TTS) | Full Stack | 2 |
+
 ---
 
 ## Dependency Graph
 
 
+
 ```
 Phase 1 (PC Whisper) ────┐
                          ├──▶ Phase 3 (PC Intent) ──▶ Phase 4 (PC Voice) ──▶ Phase 5
-Phase 2 (Phone Vitals) ──┘                                                      ▲
+Phase 2 (IoT Glove) ──────┘                                                      ▲
                                                                                 │
-Phase 5a (Flutter Theme / UI Polish) ───────────────────────────────────────────┤
+Phase 5a (App Theme / UI Polish) ───────────────────────────────────────────┤
                                                                                 │
-Phase 6 (Vitals Web Dashboard) ─────────────────────────────────────────────────┘
+Phase 6 (Dockerization) ────────────────────────────────────────────────────────┘
 ```
