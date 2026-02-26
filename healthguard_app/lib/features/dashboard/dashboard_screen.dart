@@ -746,6 +746,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   icon: Icons.psychology,
                   color: Colors.amber,
                 ),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/classroom'),
+                  child: const _VitalCard(
+                    title: 'Classroom \nSTT',
+                    value: 'Live',
+                    icon: Icons.hearing,
+                    color: Colors.deepPurple,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: size.height * 0.04),

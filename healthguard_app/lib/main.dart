@@ -4,6 +4,7 @@ import 'package:mobile/features/auth/login_screen.dart';
 import 'package:mobile/features/auth/role_selection_screen.dart';
 import 'package:mobile/features/auth/signup_screen.dart';
 import 'package:mobile/features/dashboard/dashboard_screen.dart';
+import 'package:mobile/features/classroom/classroom_screen.dart';
 import 'features/auth/doctor_login_screen.dart';
 import 'features/auth/doctor_signup_screen.dart';
 import 'features/dashboard/doctor_dashboard_screen.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         '/doctor_patient_vitals': (context) =>
             const DoctorPatientVitalsScreen(),
         AppConstants.dashboardRoute: (context) => const DashboardScreen(),
+        '/classroom': (context) => const ClassroomScreen(),
       },
     );
   }

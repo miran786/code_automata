@@ -170,7 +170,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
               title: Text(
                 _selectedDate == null
                     ? 'Select Date'
-                    : '${_selectedDate!.toString().substring(0, 10)}',
+                    : _selectedDate!.toString().substring(0, 10),
               ),
               trailing: const Icon(Icons.calendar_today),
               onTap: _pickDate,

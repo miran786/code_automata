@@ -24,8 +24,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     try {
       final uri = Uri.parse('${ApiService.baseUrl}/');
       final response = await http.get(uri).timeout(const Duration(seconds: 4));
-      if (mounted)
+      if (mounted) {
         setState(() => _backendConnected = response.statusCode == 200);
+      }
     } catch (_) {
       if (mounted) setState(() => _backendConnected = false);
     }
