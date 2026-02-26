@@ -10,9 +10,9 @@ On 2026-02-25, completely pivoted project to actualize **SYNAPSE (The Bio-Digita
 - Phase 1 executed successfully. 2 plans, 6 tasks completed (PC Hub Whisper WebSocket Server + Flutter Audio Stream Service).
 
 ## Current Position
-- **Phase**: 1 (completed)
-- **Task**: All tasks complete
-- **Status**: Verified
+- **Phase**: 2
+- **Task**: Planning complete
+- **Status**: Ready for execution
 
 ## Technology Decisions
 | Decision | Choice | Why |
@@ -21,7 +21,7 @@ On 2026-02-25, completely pivoted project to actualize **SYNAPSE (The Bio-Digita
 | App Role | Mic & Display Dashboard | App captures mic audio and sends to PC. It runs ZERO logic, but displays detected signs (e.g. "I Miran") and expansions (e.g. "I am Miran") |
 | Audio Recording | `record` package (Flutter) | Modern, robust Flutter audio capturing library for capturing classroom context |
 | Local Whisper | faster-whisper (Python) | running on the PC Hub, parses the audio chunks sent by the Flutter App |
-| Microcontrollers | Arduino Uno + ESP8266 | Split-brain architecture: 5V analog muscles (Uno) + 3.3V WiFi brain (ESP) |
+| Microcontrollers | Arduino Uno (or Nano) + ESP8266 | Split-brain architecture: 5V analog muscles (Uno) + 3.3V WiFi brain (ESP) |
 | Hub Sync | Python WebSocket Server | Receives Audio/Vectors, and streams Transcripts and inferred signs back to the App |
 | Output Audio | PAM8403 + Bone Conduction | Phantom voice feedback creates neurological loop of speaking |
 | AI Intent | Local Ollama (Python layer) | Translates shorthand phrases locally, ensuring ultra-low latency, privacy, and full offline capability without API keys |
@@ -32,6 +32,5 @@ On 2026-02-25, completely pivoted project to actualize **SYNAPSE (The Bio-Digita
 - Vector matching is resilient to shaky hands unlike raw if/else thresholds.
 
 ## Next Steps
-1. Procure missing hardware (Pulse Sensor, Bone Conduction, Capacitors).
-2. Proceed to Phase 2 (IoT Glove). Run `/plan 2` to generate execution plans.
-3. Build Phase 2 Mock Data generator until hardware is assembled.
+1. Run `/execute 2` to implement hardware wiring docs, firmware, and mock generator.
+2. Procure missing physical hardware if not already done. Use the mock generator to continue PC Hub development in parallel.

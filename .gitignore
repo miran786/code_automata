@@ -1,0 +1,10 @@
+mcp_config.json
+node_modules/
+__pycache__/
+*.pyc
+.env
+*.db
+build/
+.dart_tool/
+.pub-cache/
+.pub/

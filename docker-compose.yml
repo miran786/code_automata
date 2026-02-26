@@ -1,0 +1,44 @@
+# Docker Compose for SYNAPSE
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: synapse-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - synapse-network
+
+  hub:
+    build: ./hub
+    container_name: synapse-hub
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./hub:/app
+    depends_on:
+      - backend
+      - ollama
+    networks:
+      - synapse-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: synapse-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - synapse-network
+
+networks:
+  synapse-network:
+    driver: bridge
+
+volumes:
+  ollama_data:
