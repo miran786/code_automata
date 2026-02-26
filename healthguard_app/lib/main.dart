@@ -1,5 +1,4 @@
 import 'package:mobile/core/constants/app_constants.dart';
-import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/auth/login_screen.dart';
 import 'package:mobile/features/auth/role_selection_screen.dart';
 import 'package:mobile/features/auth/signup_screen.dart';
@@ -21,9 +20,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HealthGuard',
-      theme: AppTheme.lightTheme,
-      initialRoute: AppConstants.roleSelectionRoute,
+      title: 'SYNAPSE',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: const Color(0xFF2D004D),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF2D004D),
+          secondary: Color(0xFF00E5FF),
+        ),
+      ),
+      initialRoute: AppConstants.dashboardRoute,
       routes: {
         AppConstants.roleSelectionRoute: (context) =>
             const RoleSelectionScreen(),

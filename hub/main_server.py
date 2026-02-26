@@ -3,6 +3,11 @@ import websockets
 import time
 
 # Import our custom logic services
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from pc_hub.whisper_service import get_recent_transcript, handle_audio_stream
+
 from services.gesture_engine import match_gesture
 from services.intent_service import generate_fluent_speech
 from services.app_sync_service import start_app_sync_server, broadcast_telemetry
@@ -15,12 +20,7 @@ GLOVE_WS_URL = "ws://localhost:81"
 last_match_time = 0
 MATCH_COOLDOWN = 1.0 # 1 second before matching again
 
-def get_recent_transcript():
-    """
-    Mocks the Whisper transcript for Phase 3.
-    (Phase 1 Whisper integration happens in Phase 5).
-    """
-    return "The teacher is explaining photosynthesis."
+# The get_recent_transcript is now imported directly from pc_hub.whisper_service
 
 async def ingest_glove_data():
     """Connects to the Smart Glove (or Mock Server) and pipes vectors to the intent engine."""
@@ -81,16 +81,22 @@ async def ingest_glove_data():
 
 async def main():
     print("=====================================================")
-    print("      SYNAPSE PC HUB: NEURAL-INTENT ENGINE           ")
+    print("      THE SYNAPSE HUB IS ONLINE                      ")
     print("=====================================================")
     
+    # Start the Whisper Audio Server concurrently (Port 8765)
+    whisper_server = await websockets.serve(handle_audio_stream, "0.0.0.0", 8765)
+    print("[PC Hub] Whisper Audio Server running on Port 8765.")
+
     # Start the App Telemetry Server concurrently (Port 82)
     # The server runs in the background while we ingest glove data
     async with await start_app_sync_server(port=82):
-        print("[PC Hub] App Telemetry Server running.")
+        print("[PC Hub] App Telemetry Server running on Port 82.")
         
         # Connect to Glove logic (Port 81)
         await ingest_glove_data()
+        
+    await whisper_server.wait_closed()
 
 if __name__ == "__main__":
     try:

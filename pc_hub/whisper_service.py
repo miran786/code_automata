@@ -10,7 +10,14 @@ print("Initializing Whisper model...")
 model = WhisperModel("tiny.en", device="cpu", compute_type="int8")
 print("Whisper model initialized.")
 
+LATEST_TRANSCRIPT = ""
+
+def get_recent_transcript():
+    global LATEST_TRANSCRIPT
+    return LATEST_TRANSCRIPT if LATEST_TRANSCRIPT else "The teacher is explaining photosynthesis."
+
 async def handle_audio_stream(websocket, path):
+    global LATEST_TRANSCRIPT
     print(f"Client connected from {websocket.remote_address}")
     try:
         async for message in websocket:
@@ -35,6 +42,7 @@ async def handle_audio_stream(websocket, path):
             transcript = transcript.strip()
             if transcript:
                 print(f"Transcript: {transcript}")
+                LATEST_TRANSCRIPT = transcript
             else:
                 print("No speech detected.")
                 
