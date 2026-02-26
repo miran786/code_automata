@@ -20,6 +20,7 @@
 ---
 
 ## Phase 2: The IoT Glove (Input Array)
+**Status**: ✅ Complete
 **Milestone:** Smart Glove acts as a hardware telemetry hub gathering 7D vectors (5 fingers + 2 tilt) and Heart Rate, broadcasting over WiFi.
 
 | # | Task | Target | Wave |
