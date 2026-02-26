@@ -7,6 +7,7 @@
 ---
 
 ## Phase 1: The Ear (Context Pipeline)
+**Status**: ✅ Complete
 **Milestone:** The Flutter App records classroom audio via the phone's microphone and streams it over WebSocket to the PC Hub. A Python script on the Hub uses `faster-whisper` to transcribe the stream locally, providing context for the LLM.
 
 | # | Task | Target | Wave |
